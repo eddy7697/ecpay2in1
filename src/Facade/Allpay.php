@@ -1,5 +1,5 @@
 <?php 
-namespace Eddy7697\Ecpay2in1\Facade;
+namespace Kennychou3896\Allpay2in1\Facade;
  
 use Illuminate\Support\Facades\Facade;
  

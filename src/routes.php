@@ -1,7 +1,7 @@
 <?php
 
 Route::group([
-    'namespace' => 'Eddy7697\Ecpay2in1\Controllers',
+    'namespace' => 'Kennychou3896\Allpay2in1\Controllers',
     'prefix'    => 'allpay_demo'],
     function () {
         Route::get('/', 'DemoController@index');
