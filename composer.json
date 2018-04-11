@@ -3,6 +3,7 @@
     "description": "Ecpay 2 in 1",
     "type": "ec-tool",
     "license": "MIT",
+    "minimum-stability": "dev",
     "authors": [
         {
             "name": "Eddy",
