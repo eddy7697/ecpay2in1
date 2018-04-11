@@ -1,13 +1,13 @@
-<?php 
+<?php
 
-namespace Kennychou3896\Allpay2in1\Controllers;
- 
+namespace eddy7697\ecpay2in1\Controllers;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Allpay;
 
-class DemoController extends Controller 
-{	
+class DemoController extends Controller
+{
 
 	//-------------------------------------------------------------------------
 
@@ -35,13 +35,13 @@ class DemoController extends Controller
 
 	//-------------------------------------------------------------------------
 
-    public function index() 
+    public function index()
     {
     	return view('allpay::demo');
     }
 
-    public function checkout(Request $request) 
-    {        
+    public function checkout(Request $request)
+    {
         //基本參數(請依系統規劃自行調整)
         Allpay::i()->Send['ReturnURL']         = "http://www.allpay.com.tw/receive.php" ;
         Allpay::i()->Send['MerchantTradeNo']   = "Test".time() ;           //訂單編號

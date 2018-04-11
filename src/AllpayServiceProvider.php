@@ -1,6 +1,6 @@
 <?php
 
-namespace Kennychou3896\Allpay2in1;
+namespace eddy7697\ecpay2in1;
 
 use Illuminate\Support\ServiceProvider;
 
