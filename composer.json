@@ -1,0 +1,13 @@
+{
+    "name": "eddy7697/ecpay2in1",
+    "description": "Ecpay 2 in 1",
+    "type": "ec-tool",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Eddy",
+            "email": "vincent7697@gmail.com"
+        }
+    ],
+    "require": {}
+}
