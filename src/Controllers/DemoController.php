@@ -1,6 +1,6 @@
 <?php 
 
-namespace Kennychou3896\Allpay2in1\Controllers;
+namespace Eddy7697\Ecpay2in1\Controllers;
  
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
