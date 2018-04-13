@@ -7,6 +7,9 @@ use Illuminate\Config\Repository;
 
 class Ecpay
 {
+    private $instance = null;
+	private $logistics = null;
+
     /**
      * @var SessionManager
      */
@@ -26,6 +29,18 @@ class Ecpay
     {
         $this->session = $session;
         $this->config = $config;
+
+        $this->instance = new \ECPay_AllInOne();
+        $this->logistics = new \ECPayLogistics();
+        
+        $this->instance->ServiceURL          = config('ecpay.ServiceURL');
+        $this->instance->HashKey             = config('ecpay.HashKey');
+        $this->instance->HashIV              = config('ecpay.HashIV');
+        $this->instance->MerchantID          = config('ecpay.MerchantID');
+
+        $this->logistics->Send['HashKey']    = config('ecpay.HashKey');
+        $this->logistics->Send['HashIV']     = config('ecpay.HashIV');
+        $this->logistics->Send['MerchantID'] = config('ecpay.MerchantID');
     }
 
     /**
@@ -39,25 +54,11 @@ class Ecpay
 
     public function logistics()
     {
-        $logistics = new \ECPayLogistics();
-
-        $logistics->ServiceURL = config('allpay.ServiceURL');
-        $logistics->HashKey    = config('allpay.HashKey');
-        $logistics->HashIV     = config('allpay.HashIV');
-        $logistics->MerchantID = config('allpay.MerchantID');
-        
-        return $logistics;
+        return $this->logistics;
     }
 
     public function instance()
     {
-        $instance = new \ECPay_AllInOne();
-
-        $instance->ServiceURL = config('allpay.ServiceURL');
-        $instance->HashKey    = config('allpay.HashKey');
-        $instance->HashIV     = config('allpay.HashIV');
-        $instance->MerchantID = config('allpay.MerchantID');
-
-        return $instance;
+        return $this->instance;
     }
 }

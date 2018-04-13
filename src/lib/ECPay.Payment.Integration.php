@@ -493,11 +493,6 @@ class ECPay_AllInOne {
 
     }
 
-    public function testAC($value='')
-    {
-        return $value;
-    }
-
     //產生訂單
     function CheckOut($target = "_self") {
         $arParameters = array_merge( array('MerchantID' => $this->MerchantID, 'EncryptType' => $this->EncryptType) ,$this->Send);
