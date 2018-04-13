@@ -1,8 +1,9 @@
 {
     "name": "eddy7697/ecpay2in1",
-    "description": "Ecpay 2in1 - Laravel 5 version",
-    "type": "ecTool",
-    "keywords": ["allpay","ecpay"],
+    "description": "e-commerce tool",
+    "require": {
+        "php": "7.0"
+    },
     "license": "MIT",
     "authors": [
         {
@@ -10,14 +11,5 @@
             "email": "vincent7697@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
-    "require": {},
-    "autoload": {
-        "classmap": [
-            "src/lib"
-        ],
-        "psr-4": {
-            "eddy7697\\ecpay2in1\\": "src/"
-        }
-    }
+    "minimum-stability": "dev"
 }
