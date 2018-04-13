@@ -9,5 +9,10 @@
             "email": "vincent7697@gmail.com"
         }
     ],
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Eddy7697\\Ecpay2in1\\": "src/"
+        }
+    }
 }
