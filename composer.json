@@ -1,9 +1,7 @@
 {
     "name": "eddy7697/ecpay2in1",
     "description": "e-commerce tool",
-    "require": {
-        "php": "7.0"
-    },
+    "require": {},
     "license": "MIT",
     "authors": [
         {
