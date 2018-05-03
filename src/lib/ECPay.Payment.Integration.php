@@ -504,7 +504,11 @@ class ECPay_AllInOne {
         $arParameters = array_merge( array('MerchantID' => $this->MerchantID, 'EncryptType' => $this->EncryptType) ,$this->Send);
         return ECPay_Send::CheckOutString($paymentButton,$target = "_self",$arParameters,$this->SendExtend,$this->HashKey,$this->HashIV,$this->ServiceURL);
     }
-
+    //產生訂單form
+    function CheckOutForm($paymentButton = null, $target = "_self") {
+        $arParameters = array_merge( array('MerchantID' => $this->MerchantID, 'EncryptType' => $this->EncryptType) ,$this->Send);
+        return ECPay_Send::CheckOutForm($paymentButton,$target = "_self",$arParameters,$this->SendExtend,$this->HashKey,$this->HashIV,$this->ServiceURL);
+    }
     //取得付款結果通知的方法
     function CheckOutFeedback() {
         return $arFeedback = ECPay_CheckOutFeedback::CheckOut(array_merge($_POST, array('EncryptType' => $this->EncryptType)),$this->HashKey,$this->HashIV,0);
@@ -616,7 +620,7 @@ class ECPay_Send extends ECPay_Aio
 
         $arParameters = self::process($arParameters,$arExtend);
         //產生檢查碼
-        $szCheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$arParameters['EncryptType']);
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$arParameters['EncryptType']);
 
         //生成表單，自動送出
         $szHtml =  '<!DOCTYPE html>';
@@ -628,7 +632,7 @@ class ECPay_Send extends ECPay_Aio
         $szHtml .=         "<form id=\"__ecpayForm\" method=\"post\" target=\"{$target}\" action=\"{$ServiceURL}\">";
 
         foreach ($arParameters as $keys => $value) {
-            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value=\"{$value}\" />";
+            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value='{$value}' />";
         }
 
         $szHtml .=             "<input type=\"hidden\" name=\"CheckMacValue\" value=\"{$szCheckMacValue}\" />";
@@ -645,7 +649,7 @@ class ECPay_Send extends ECPay_Aio
 
         $arParameters = self::process($arParameters,$arExtend);
         //產生檢查碼
-        $szCheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$arParameters['EncryptType']);
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$arParameters['EncryptType']);
 
         $szHtml =  '<!DOCTYPE html>';
         $szHtml .= '<html>';
@@ -656,7 +660,7 @@ class ECPay_Send extends ECPay_Aio
         $szHtml .=         "<form id=\"__ecpayForm\" method=\"post\" target=\"{$target}\" action=\"{$ServiceURL}\">";
 
         foreach ($arParameters as $keys => $value) {
-            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value=\"{$value}\" />";
+            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value='{$value}' />";
         }
 
         $szHtml .=             "<input type=\"hidden\" name=\"CheckMacValue\" value=\"{$szCheckMacValue}\" />";
@@ -664,6 +668,20 @@ class ECPay_Send extends ECPay_Aio
         $szHtml .=         '</form>';
         $szHtml .=     '</body>';
         $szHtml .= '</html>';
+        return  $szHtml ;
+    }
+	static function CheckOutForm($paymentButton,$target = "_self",$arParameters = array(),$arExtend = array(),$HashKey='',$HashIV='',$ServiceURL=''){
+
+        $arParameters = self::process($arParameters,$arExtend);
+        //產生檢查碼
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$arParameters['EncryptType']);
+        $szHtml = "<form id=\"__ecpayForm\" method=\"post\" target=\"{$target}\" action=\"{$ServiceURL}\">";
+        foreach ($arParameters as $keys => $value) {
+            $szHtml .= "<input type=\"hidden\" name=\"{$keys}\" value='{$value}' />";
+        }
+        $szHtml .= "<input type=\"hidden\" name=\"CheckMacValue\" value=\"{$szCheckMacValue}\" />";
+        $szHtml .=  '<script type="text/javascript">document.getElementById("__ecpayForm").submit();</script>';
+        $szHtml .= '</form>';
         return  $szHtml ;
     }
 
@@ -698,7 +716,7 @@ class ECPay_CheckOutFeedback extends ECPay_Aio
             }
         }
 
-        $CheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+        $CheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
 
         if ($CheckMacValue != $arParameters['CheckMacValue']) {
             array_push($arErrors, 'CheckMacValue verify fail.');
@@ -726,7 +744,7 @@ class ECPay_QueryTradeInfo extends ECPay_Aio
 
         // 呼叫查詢。
         if (sizeof($arErrors) == 0) {
-            $arParameters["CheckMacValue"] = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+            $arParameters["CheckMacValue"] = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
             // 送出查詢並取回結果。
             $szResult = parent::ServerPost($arParameters,$ServiceURL);
             $szResult = str_replace(' ', '%20', $szResult);
@@ -746,7 +764,7 @@ class ECPay_QueryTradeInfo extends ECPay_Aio
 
             // 驗證檢查碼。
             if (sizeof($arFeedback) > 0) {
-                $szConfirmMacValue = ECPay_AIO_CheckMacValue::generate($arConfirmArgs,$HashKey,$HashIV,$EncryptType);
+                $szConfirmMacValue = ECPay_CheckMacValue::generate($arConfirmArgs,$HashKey,$HashIV,$EncryptType);
                 if ($szCheckMacValue != $szConfirmMacValue) {
                     array_push($arErrors, 'CheckMacValue verify fail.');
                 }
@@ -776,7 +794,7 @@ class ECPay_QueryPeriodCreditCardTradeInfo extends ECPay_Aio
 
         // 呼叫查詢。
         if (sizeof($arErrors) == 0) {
-            $arParameters["CheckMacValue"] = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+            $arParameters["CheckMacValue"] = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
             // 送出查詢並取回結果。
             $szResult = parent::ServerPost($arParameters,$ServiceURL);
             $szResult = str_replace(' ', '%20', $szResult);
@@ -811,7 +829,7 @@ class ECPay_DoAction extends ECPay_Aio
         unset($arParameters["EncryptType"]);
 
         //產生驗證碼
-        $szCheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
         $arParameters["CheckMacValue"] = $szCheckMacValue;
         // 送出查詢並取回結果。
         $szResult = self::ServerPost($arParameters,$ServiceURL);
@@ -849,7 +867,7 @@ class ECPay_AioCapture extends ECPay_Aio
         $EncryptType = $arParameters["EncryptType"];
         unset($arParameters["EncryptType"]);
 
-        $szCheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
         $arParameters["CheckMacValue"] = $szCheckMacValue;
 
         // 送出查詢並取回結果。
@@ -879,7 +897,7 @@ class ECPay_TradeNoAio extends ECPay_Aio
         $EncryptType = $arParameters['EncryptType'];
         unset($arParameters['EncryptType']);
 
-        $szCheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
 
         //生成表單，自動送出
         $szHtml =  '<!DOCTYPE html>';
@@ -891,7 +909,7 @@ class ECPay_TradeNoAio extends ECPay_Aio
         $szHtml .=         "<form id=\"__ecpayForm\" method=\"post\" target=\"{$target}\" action=\"{$ServiceURL}\">";
 
         foreach ($arParameters as $keys => $value) {
-            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value=\"{$value}\" />";
+            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value='{$value}' />";
         }
 
         $szHtml .=             "<input type=\"hidden\" name=\"CheckMacValue\" value=\"{$szCheckMacValue}\" />";
@@ -917,7 +935,7 @@ class ECPay_QueryTrade extends ECPay_Aio
 
         // 呼叫查詢。
         if (sizeof($arErrors) == 0) {
-            $arParameters["CheckMacValue"] = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+            $arParameters["CheckMacValue"] = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
             // 送出查詢並取回結果。
             $szResult = parent::ServerPost($arParameters,$ServiceURL);
 
@@ -945,7 +963,7 @@ class ECPay_FundingReconDetail extends ECPay_Aio
         $EncryptType = $arParameters["EncryptType"];
         unset($arParameters["EncryptType"]);
 
-        $szCheckMacValue = ECPay_AIO_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
+        $szCheckMacValue = ECPay_CheckMacValue::generate($arParameters,$HashKey,$HashIV,$EncryptType);
 
         //生成表單，自動送出
         $szHtml =  '<!DOCTYPE html>';
@@ -957,7 +975,7 @@ class ECPay_FundingReconDetail extends ECPay_Aio
         $szHtml .=         "<form id=\"__ecpayForm\" method=\"post\" target=\"{$target}\" action=\"{$ServiceURL}\">";
 
         foreach ($arParameters as $keys => $value) {
-            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value=\"{$value}\" />";
+            $szHtml .=         "<input type=\"hidden\" name=\"{$keys}\" value='{$value}' />";
         }
 
         $szHtml .=             "<input type=\"hidden\" name=\"CheckMacValue\" value=\"{$szCheckMacValue}\" />";
@@ -1497,7 +1515,7 @@ class ECPay_AndroidPay extends ECPay_Verification
 /**
 *  檢查碼
 */
-class ECPay_AIO_CheckMacValue{
+class ECPay_CheckMacValue{
 
     static function generate($arParameters = array(),$HashKey = '' ,$HashIV = '',$encType = 0){
         $sMacValue = '' ;
@@ -1505,7 +1523,7 @@ class ECPay_AIO_CheckMacValue{
         if(isset($arParameters))
         {
             unset($arParameters['CheckMacValue']);
-            uksort($arParameters, array('ECPay_AIO_CheckMacValue','merchantSort'));
+            uksort($arParameters, array('ECPay_CheckMacValue','merchantSort'));
 
             // 組合字串
             $sMacValue = 'HashKey=' . $HashKey ;
