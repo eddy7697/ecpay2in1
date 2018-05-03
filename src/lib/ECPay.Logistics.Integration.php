@@ -6,6 +6,7 @@
 	 * @version		1.0.1012
 	 */
 
+
 	/**
 	 *  物流類型
 	 *
@@ -99,14 +100,14 @@
 	}
 
 	/**
-	 *  測試環境網址
+	 *  正式測試環境網址
 	 *
 	 * @author		https://www.ecpay.com.tw
 	 * @category	Options
 	 * @version		1.0.1012
 	 */
 	abstract class ECPayTestURL {
-        const CVS_MAP = 'https://logistics-stage.ecpay.com.tw/Express/map';// 電子地圖
+        const CVS_MAP = 'https://logistics-stage.ecpay.com.tw/Express/map';// 電子地圖(測試環境有問題，直接使用正式環境URL)
 		const SHIPPING_ORDER = 'https://logistics-stage.ecpay.com.tw/Express/Create';// 物流訂單建立
 		const HOME_RETURN_ORDER = 'https://logistics-stage.ecpay.com.tw/Express/ReturnHome';// 宅配逆物流訂單
 		const UNIMART_RETURN_ORDER = 'https://logistics-stage.ecpay.com.tw/express/ReturnUniMartCVS';// 超商取貨逆物流訂單(統一超商B2C)
@@ -238,7 +239,7 @@
 		 * @return		String
 		 * @version		1.0.1012
 		 */
-		public function CvsMap($ButtonDesc = '電子地圖', $Target = '_self') {
+		public function CvsMap($ButtonDesc = '', $Target = '_self') {
 			// 參數初始化
 			$ParamList = array(
 				'MerchantID' => '',
@@ -418,12 +419,10 @@
 					throw new Exception('ReceiverCellPhone is required when LogisticsSubType is UNIMART, FAMILY, HILIFE, UNIMARTC2C or HILIFEC2C.');
 				}
 			}
-
 			if ($this->PostParams['LogisticsSubType'] == LogisticsSubType::ECAN and $this->PostParams['Temperature'] !== Temperature::ROOM) {
 				// 物流子類型為宅配通(ECAN)時，溫層(Temperature)只能用常溫(ROOM)
 				throw new Exception('Temperature should be ROOM when LogisticsSubType is ECAN.');
 			}
-
 			if ($this->PostParams['LogisticsSubType'] == LogisticsSubType::ECAN and date('Ymd', strtotime($this->PostParams['ScheduledDeliveryDate'])) < date('Ymd', strtotime('+3 day'))) {
 				// 指定送達日期為該訂單建立時間 + 3 天
 				throw new Exception('ScheduledDeliveryDate should be the time that create order + 3 day.');
@@ -452,7 +451,7 @@
 			}
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			return $this->GenPostHTML($ButtonDesc, $Target);
 		}
@@ -619,12 +618,10 @@
 				// 物流子類型為宅配通(ECAN)時，溫層(Temperature)只能用常溫(ROOM)
 				throw new Exception('Temperature should be ROOM when LogisticsSubType is ECAN.');
 			}
-
 			if ($this->PostParams['LogisticsSubType'] == LogisticsSubType::ECAN and date('Ymd', strtotime($this->PostParams['ScheduledDeliveryDate'])) < date('Ymd', strtotime('+3 day'))) {
 				// 指定送達日期為該訂單建立時間 + 3 天
 				throw new Exception('ScheduledDeliveryDate should be the time that create order + 3 day.');
 			}
-
 			$this->ValidateEmail('ReceiverEmail', $this->PostParams['ReceiverEmail'], 50, true);
 			$this->ValidateString('TradeDesc', $this->PostParams['TradeDesc'], 200, true);
 			$this->ValidateURL('ServerReplyURL', $this->PostParams['ServerReplyURL']);
@@ -647,12 +644,7 @@
 			}
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
-
-			// urlencode
-			foreach($this->PostParams as $key => $value) {
-            	$this->PostParams[$key] = urlencode($value);
-			}
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
             // 解析回傳結果
             // 正確：1|MerchantID=XXX&MerchantTradeNo=XXX&RtnCode=XXX&RtnMsg=XXX&AllPayLogisticsID=XXX&LogisticsType=XXX&LogisticsSubType=XXX&GoodsAmount=XXX&UpdateStatusDate=XXX&ReceiverName=XXX&ReceiverPhone=XXX&ReceiverCellPhone=XXX&ReceiverEmail=XXX&ReceiverAddress=XXX&CVSPaymentNo=XXX&CVSValidationNo=XXX &CheckMacValue=XXX
@@ -671,7 +663,6 @@
 
             return $Result;
 		}
-
 		/**
 		 *  回傳 CheckMacValue 檢查
 		 *
@@ -696,7 +687,7 @@
 				unset($Feedback['CheckMacValue']);
 				unset($Feedback['ResCode']);
 				unset($Feedback['ErrorMessage']);
-				$CheckMacValue = ECPay_CheckMacValues::generate($Feedback, $this->HashKey, $this->HashIV);
+				$CheckMacValue = ECPay_CheckMacValue::generate($Feedback, $this->HashKey, $this->HashIV);
 				if ($CheckMacValue != $FeedbackCheckMacValue) {
 					throw new Exception('CheckMacValue verify fail.');
 				}
@@ -755,9 +746,7 @@
 			$this->ServiceURL = $this->GetURL('HOME_RETURN_ORDER');
 
 			$this->ValidateID('AllPayLogisticsID', $this->PostParams['AllPayLogisticsID'], 20, true);
-
 			$this->ValidateLogisticsSubType(true);
-
 			// 物流交易編號(AllPayLogisticsID)與物流子類型(LogisticsSubType)擇一不可為空
 			if (empty($this->PostParams['AllPayLogisticsID'])) {
 				$IsAllpayLogisticsIdEmpty = true;
@@ -806,17 +795,14 @@
 
 			// 若物流交易編號(AllPayLogisticsID)為空值時，收件人地址(ReceiverAddress)不可為空。
 			$this->ValidateAddress('ReceiverAddress', $this->PostParams['ReceiverAddress'], 6, 60, $IsAllowEmpty);
-
 			if ($this->PostParams['LogisticsSubType'] == LogisticsSubType::ECAN and $this->PostParams['Temperature'] !== Temperature::ROOM) {
 				// 物流子類型為宅配通(ECAN)時，溫層(Temperature)只能用常溫(ROOM)
 				throw new Exception('Temperature should be ROOM when LogisticsSubType is ECAN.');
 			}
-
 			if ($this->PostParams['LogisticsSubType'] == LogisticsSubType::ECAN and date('Ymd', strtotime($this->PostParams['ScheduledDeliveryDate'])) < date('Ymd', strtotime('+3 day'))) {
 				// 指定送達日期為該訂單建立時間 + 3 天
 				throw new Exception('ScheduledDeliveryDate should be the time that create order + 3 day.');
 			}
-
 			$this->ValidateAmount('GoodsAmount', $this->PostParams['GoodsAmount']);
 			if ($this->PostParams['GoodsAmount'] < $MinAmount or $this->PostParams['GoodsAmount'] > $MaxAmount){
 				throw new Exception('Invalid GoodsAmount.');
@@ -831,7 +817,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：1|OK
@@ -881,7 +867,6 @@
 			$this->ValidatePhoneNumber('SenderPhone', $this->PostParams['SenderPhone'], true);
 			$this->ValidateString('Remark', $this->PostParams['Remark'], 20, true);
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
-
 			$MinAmount = 1; // 金額下限
 			$MaxAmount = 19999; // 金額上限
 			if ($this->PostParams['GoodsAmount'] < $MinAmount or $this->PostParams['GoodsAmount'] > $MaxAmount){
@@ -889,7 +874,7 @@
 			}
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：RtnMerchantTradeNo | RtnOrderNo
@@ -906,7 +891,6 @@
 
 			return $Result;
 		}
-
 		/**
 		 *  超商取貨逆物流訂單(萊爾富超商B2C)
 		 *
@@ -946,7 +930,6 @@
 			$this->ValidatePhoneNumber('SenderPhone', $this->PostParams['SenderPhone'], true);
 			$this->ValidateString('Remark', $this->PostParams['Remark'], 20, true);
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
-
 			$MinAmount = 1; // 金額下限
 			$MaxAmount = 20000; // 金額上限
 			if ($this->PostParams['GoodsAmount'] < $MinAmount or $this->PostParams['GoodsAmount'] > $MaxAmount){
@@ -954,7 +937,7 @@
 			}
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：RtnMerchantTradeNo | RtnOrderNo
@@ -971,7 +954,6 @@
 
 			return $Result;
 		}
-
 		/**
 		 *  超商取貨逆物流訂單(全家超商B2C)
 		 *
@@ -1038,7 +1020,6 @@
 					throw new Exception('Cost number and GoodsName number do not match.');
 				}
 			}
-
 			$MinAmount = 1; // 金額下限
 			$MaxAmount = 20000; // 金額上限
 			if ($this->PostParams['GoodsAmount'] < $MinAmount or $this->PostParams['GoodsAmount'] > $MaxAmount){
@@ -1046,7 +1027,7 @@
 			}
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：RtnMerchantTradeNo | RtnOrderNo
@@ -1091,7 +1072,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：1|OK
@@ -1101,7 +1082,6 @@
 
 			return $Result;
 		}
-
 		/**
 		 *  廠商修改出貨日期、取貨門市(統一超商B2C)
 		 *
@@ -1138,7 +1118,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：1|OK
@@ -1148,7 +1128,6 @@
 
 			return $Result;
 		}
-
 		/**
 		 *  更新門市(統一超商C2C)
 		 *
@@ -1197,7 +1176,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：1|OK
@@ -1239,7 +1218,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 正確：1|OK
@@ -1278,7 +1257,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			// 解析回傳結果
             // 回應訊息：MerchantID=XXX&MerchantTradeNo=XXX&AllPayLogisticsID=XXX&GoodsAmount=XXX&LogisticsType=XXX&HandlingCharge=XXX&TradeDate=XXX&LogisticsStatus=XXX&GoodsName=XXX &CheckMacValue=XXX
@@ -1314,10 +1293,11 @@
             $this->ValidateHashIV();
 			$this->ValidateID('MerchantID', $this->PostParams['MerchantID'], 10);
 			$this->ServiceURL = $this->GetURL('PRINT_TRADE_DOC');
+			$this->ValidateID('AllPayLogisticsID', $this->PostParams['AllPayLogisticsID'], 20);
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			return $this->GenPostHTML($ButtonDesc, $Target);
 		}
@@ -1355,7 +1335,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			return $this->GenPostHTML($ButtonDesc, $Target);
 		}
@@ -1391,7 +1371,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			return $this->GenPostHTML($ButtonDesc, $Target);
 		}
@@ -1427,7 +1407,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			return $this->GenPostHTML($ButtonDesc, $Target);
 		}
@@ -1462,7 +1442,7 @@
 			$this->ValidateID('PlatformID', $this->PostParams['PlatformID'], 10, true);
 
 			// 產生 CheckMacValue
-			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValues::generate($this->PostParams, $this->HashKey, $this->HashIV);
+			$this->PostParams['CheckMacValue'] = ECPay_CheckMacValue::generate($this->PostParams, $this->HashKey, $this->HashIV);
 
 			return $this->GenPostHTML($ButtonDesc, $Target);
 		}
@@ -1612,7 +1592,6 @@
 				$this->IsValidFormat($Name, '/^\(?\d{2}\)?\-?(\d{6,8})(#\d{1,6}){0,1}$/', $Value);
 			}
 		}
-
 		/**
 		 *  手機號碼檢查
 		 *
@@ -1695,19 +1674,16 @@
 				$this->IsAllowEmpty($Name, $AllowEmpty);
 			} else {
 				// 長度檢查
-
 				if ($MinLength) {
 					// 最小長度限制
 					$this->IsBelowLength($Name, $this->StringLength($Value, $this->Encode), $MinLength);
 				}
-
 				if ($MaxLength) {
 					// 最大長度限制
 					$this->IsOverLength($Name, $this->StringLength($Value, $this->Encode), $MaxLength);
 				}
 			}
 		}
-
 		/**
 		 *  混合型態 ID 檢查
 		 *
@@ -1751,7 +1727,6 @@
 				$this->IsLegalValue($Name, $ClassName, $Value);
 			}
 		}
-
 		/**
 		 *  廠商交易編號檢查
 		 *
@@ -1917,7 +1892,6 @@
 				$this->IsDate($Name, 'Y/m/d H:i:s', $Value);
 			}
 		}
-
 		/**
 		 *  溫層檢查
 		 *
@@ -2027,7 +2001,6 @@
 				$this->IsDate($Name, 'Y/m/d', $Value);
 			}
 		}
-
 		/**
 		 *  是否允許空值
 		 *
@@ -2059,7 +2032,6 @@
 				throw new Exception($Name . ' max length is ' . $MaxLength . '.');
 			}
 		}
-
 		/**
 		 *  是否超過長度限制
 		 *
@@ -2254,18 +2226,18 @@
 		 */
 		private function GenPostHTML($ButtonDesc = '', $Target = '_self') {
 			$PostHTML = $this->AddNextLine('<div style="text-align:center;">');
-			$PostHTML .= $this->AddNextLine('  <form id="ECPayForm" method="POST" action="' . $this->ServiceURL . '" target="' . $Target . '">');
+			$PostHTML .= $this->AddNextLine('<form id="ECPayForm" method="POST" action="' . $this->ServiceURL . '" target="' . $Target . '">');
 			foreach ($this->PostParams as $Name => $Value) {
-				$PostHTML .= $this->AddNextLine('    <input type="hidden" name="' . $Name . '" value="' . $Value . '" />');
+				$PostHTML .= $this->AddNextLine('<input type="hidden" name="' . $Name . '" value="' . $Value . '" />');
 			}
 			if (!empty($ButtonDesc)) {
 				// 手動
-				$PostHTML .= $this->AddNextLine('    <input type="submit" id="__paymentButton" value="' . $ButtonDesc . '" />');
+				$PostHTML .= $this->AddNextLine('<input type="submit" id="__paymentButton" value="' . $ButtonDesc . '" />');
 			} else {
 				// 自動
-				$PostHTML .= $this->AddNextLine('    <script>document.getElementById("ECPayForm").submit();</script>');
+				$PostHTML .= $this->AddNextLine('<script>document.getElementById("ECPayForm").submit();</script>');
 			}
-			$PostHTML .= $this->AddNextLine('  </form>');
+			$PostHTML .= $this->AddNextLine('</form>');
 			$PostHTML .= $this->AddNextLine('</div>');
 
 			return $PostHTML;
@@ -2286,7 +2258,6 @@
 		}
 
 		/**
-
 		 *  解析 ECPay 回傳結果
 		 *
 		 * @author		https://www.ecpay.com.tw
@@ -2311,109 +2282,87 @@
 			return $Feedback;
 		}
 	}
+	class ECPay_CheckMacValue
+	{
+		/**
+		* 產生檢查碼
+		*/
+		static function generate($arParameters = array(), $HashKey = '', $HashIV = ''){
+			$sMacValue = '' ;
+			if(isset($arParameters)){
 
-    if (!class_exists('ECPay_CheckMacValues', true)) {
-		class ECPay_CheckMacValues
-		{
-			/**
-			* 產生檢查碼
-			*/
-			static function generate($arParameters = array(), $HashKey = '', $HashIV = ''){
-
-				$sMacValue = '' ;
-
-				if(isset($arParameters)){
-
-					unset($arParameters['CheckMacValue']);
-					uksort($arParameters, array('ECPay_CheckMacValues','merchantSort'));
-
-					// 組合字串
-					$sMacValue = 'HashKey=' . $HashKey ;
-					foreach($arParameters as $key => $value)
-					{
-						$sMacValue .= '&' . $key . '=' . $value ;
-					}
-
-					$sMacValue .= '&HashIV=' . $HashIV ;
-
-					// URL Encode編碼
-					$sMacValue = urlencode($sMacValue);
-
-					// 轉成小寫
-					$sMacValue = strtolower($sMacValue);
-
-					// 取代為與 dotNet 相符的字元
-					$sMacValue = ECPay_CheckMacValues::Replace_Symbol($sMacValue);
-
-					// 編碼
-					$sMacValue = md5($sMacValue);
-
-					$sMacValue = strtoupper($sMacValue);
+				uksort($arParameters, array('ECPay_CheckMacValue','merchantSort'));
+				// 組合字串
+				$sMacValue = 'HashKey=' . $HashKey ;
+				foreach($arParameters as $key => $value)
+				{
+					$sMacValue .= '&' . $key . '=' . $value ;
 				}
-
-				return $sMacValue ;
+				$sMacValue .= '&HashIV=' . $HashIV ;
+				// URL Encode編碼
+				$sMacValue = urlencode($sMacValue);
+				// 轉成小寫
+				$sMacValue = strtolower($sMacValue);
+				// 取代為與 dotNet 相符的字元
+				$sMacValue = ECPay_CheckMacValue::Replace_Symbol($sMacValue);
+				// 編碼
+				$sMacValue = md5($sMacValue);
+				$sMacValue = strtoupper($sMacValue);
 			}
+			return $sMacValue ;
+		}
+		/**
+		* 自訂排序使用
+		*/
+		private static function merchantSort($a,$b){
+			return strcasecmp($a, $b);
+		}
+	    /**
+		* 參數內特殊字元取代
+		* 傳入	$sParameters	參數
+		* 傳出	$sParameters	回傳取代後變數
+		*/
+		static function Replace_Symbol($sParameters){
+			if(!empty($sParameters)){
 
-			/**
-			* 自訂排序使用
-			*/
-			private static function merchantSort($a,$b){
-				return strcasecmp($a, $b);
+				$sParameters = str_replace('%2D', '-', $sParameters);
+				$sParameters = str_replace('%2d', '-', $sParameters);
+				$sParameters = str_replace('%5F', '_', $sParameters);
+				$sParameters = str_replace('%5f', '_', $sParameters);
+				$sParameters = str_replace('%2E', '.', $sParameters);
+				$sParameters = str_replace('%2e', '.', $sParameters);
+				$sParameters = str_replace('%21', '!', $sParameters);
+				$sParameters = str_replace('%2A', '*', $sParameters);
+				$sParameters = str_replace('%2a', '*', $sParameters);
+				$sParameters = str_replace('%28', '(', $sParameters);
+				$sParameters = str_replace('%29', ')', $sParameters);
 			}
+			return $sParameters ;
+		}
+		/**
+		* 參數內特殊字元還原
+		* 傳入	$sParameters	參數
+		* 傳出	$sParameters	回傳取代後變數
+		*/
+		static function Replace_Symbol_Decode($sParameters){
+			if(!empty($sParameters)){
 
-		    /**
-			* 參數內特殊字元取代
-			* 傳入	$sParameters	參數
-			* 傳出	$sParameters	回傳取代後變數
-			*/
-			static function Replace_Symbol($sParameters){
-				if(!empty($sParameters)){
-
-					$sParameters = str_replace('%2D', '-', $sParameters);
-					$sParameters = str_replace('%2d', '-', $sParameters);
-					$sParameters = str_replace('%5F', '_', $sParameters);
-					$sParameters = str_replace('%5f', '_', $sParameters);
-					$sParameters = str_replace('%2E', '.', $sParameters);
-					$sParameters = str_replace('%2e', '.', $sParameters);
-					$sParameters = str_replace('%21', '!', $sParameters);
-					$sParameters = str_replace('%2A', '*', $sParameters);
-					$sParameters = str_replace('%2a', '*', $sParameters);
-					$sParameters = str_replace('%28', '(', $sParameters);
-					$sParameters = str_replace('%29', ')', $sParameters);
-				}
-
-				return $sParameters ;
+				$sParameters = str_replace('-', '%2d', $sParameters);
+				$sParameters = str_replace('_', '%5f', $sParameters);
+				$sParameters = str_replace('.', '%2e', $sParameters);
+				$sParameters = str_replace('!', '%21', $sParameters);
+				$sParameters = str_replace('*', '%2a', $sParameters);
+				$sParameters = str_replace('(', '%28', $sParameters);
+				$sParameters = str_replace(')', '%29', $sParameters);
+				$sParameters = str_replace('+', '%20', $sParameters);
 			}
-
-			/**
-			* 參數內特殊字元還原
-			* 傳入	$sParameters	參數
-			* 傳出	$sParameters	回傳取代後變數
-			*/
-			static function Replace_Symbol_Decode($sParameters){
-				if(!empty($sParameters)){
-
-					$sParameters = str_replace('-', '%2d', $sParameters);
-					$sParameters = str_replace('_', '%5f', $sParameters);
-					$sParameters = str_replace('.', '%2e', $sParameters);
-					$sParameters = str_replace('!', '%21', $sParameters);
-					$sParameters = str_replace('*', '%2a', $sParameters);
-					$sParameters = str_replace('(', '%28', $sParameters);
-					$sParameters = str_replace(')', '%29', $sParameters);
-					$sParameters = str_replace('+', '%20', $sParameters);
-				}
-
-				return $sParameters ;
-			}
+			return $sParameters ;
 		}
 	}
-
 	class ECPay_IO
 	{
 		static function ServerPost($parameters ,$ServiceURL){
-
 		    $sSend_Info = '' ;
-
 		    // 組合字串
 			foreach($parameters as $key => $value)
 			{
@@ -2426,9 +2375,7 @@
 					$sSend_Info .= '&' . $key . '=' . $value ;
 				}
 			}
-
 		    $ch = curl_init();
-
 		    if (FALSE === $ch) {
 		        throw new Exception('curl failed to initialize');
 		    }
@@ -2440,13 +2387,10 @@
 		    curl_setopt($ch, CURLOPT_POST, TRUE);
 		    curl_setopt($ch, CURLOPT_POSTFIELDS, $sSend_Info);
 		    $rs = curl_exec($ch);
-
 		    if (FALSE === $rs) {
 		        throw new Exception(curl_error($ch), curl_errno($ch));
 		    }
-
 		    curl_close($ch);
-
 		    return $rs;
 		}
 	}
