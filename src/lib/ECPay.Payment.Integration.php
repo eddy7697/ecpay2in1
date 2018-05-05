@@ -662,6 +662,7 @@ class ECPay_Send extends ECPay_Aio
         $szHtml .=             "<input type=\"hidden\" name=\"CheckMacValue\" value=\"{$szCheckMacValue}\" />";
         $szHtml .=             "<input type=\"submit\" id=\"__paymentButton\" value=\"{$paymentButton}\" />";
         $szHtml .=         '</form>';
+        $szHtml .=         '<script type="text/javascript">document.getElementById("__ecpayForm").submit();</script>';
         $szHtml .=     '</body>';
         $szHtml .= '</html>';
         return  $szHtml ;
