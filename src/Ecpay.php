@@ -36,11 +36,11 @@ class Ecpay
         $this->instance->ServiceURL          = config('ecpay.ServiceURL');
         $this->instance->HashKey             = config('ecpay.HashKey');
         $this->instance->HashIV              = config('ecpay.HashIV');
-        $this->instance->MerchantID          = config('ecpay.MerchantID');
+        $this->instance->MerchantID          = config('ecpay.MerchantId');
 
         $this->logistics->Send['HashKey']    = config('ecpay.HashKey');
         $this->logistics->Send['HashIV']     = config('ecpay.HashIV');
-        $this->logistics->Send['MerchantID'] = config('ecpay.MerchantID');
+        $this->logistics->Send['MerchantID'] = config('ecpay.MerchantId');
     }
 
     /**
